@@ -10,13 +10,6 @@
         <relativePath>../pom.xml</relativePath> <!-- Путь к корневому POM -->
     </parent>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-    </dependencies>
-
     <artifactId>stats</artifactId>
     <packaging>pom</packaging>
     <modules>
