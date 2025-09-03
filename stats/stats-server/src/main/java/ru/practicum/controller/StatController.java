@@ -16,6 +16,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StatController {
 
+    public static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+
     private final StatService statsService;
 
     @PostMapping("/hit")
@@ -26,8 +28,8 @@ public class StatController {
 
     @GetMapping("/stats")
     public List<ViewStatsDto> getStats(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
+            @RequestParam @DateTimeFormat(pattern = DATE_TIME_PATTERN) LocalDateTime start,
+            @RequestParam @DateTimeFormat(pattern = DATE_TIME_PATTERN) LocalDateTime end,
             @RequestParam(required = false) List<String> uris,
             @RequestParam(defaultValue = "false") boolean unique) {
         return statsService.getStats(start, end, uris, unique);
