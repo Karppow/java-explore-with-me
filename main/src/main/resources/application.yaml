@@ -7,8 +7,8 @@ stats-server:
 spring:
   datasource:
     url: jdbc:postgresql://ewm-db:5432/ewm_main_db
-    username: ewm_user
-    password: ewm_password
+    username: user
+    password: password
   jpa:
     hibernate:
       ddl-auto: create-drop
