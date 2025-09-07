@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class EventFullDto {
 
+    public static final String DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+
     private Long id;
     private String annotation;
     private CategoryDto category;

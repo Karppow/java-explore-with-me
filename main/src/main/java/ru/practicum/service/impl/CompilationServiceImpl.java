@@ -32,6 +32,9 @@ import java.util.stream.Collectors;
 @Transactional (readOnly = true)
 public class CompilationServiceImpl implements CompilationService {
 
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
     private final CompilationMapper compilationMapper;
