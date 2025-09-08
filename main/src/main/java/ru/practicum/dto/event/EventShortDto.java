@@ -4,11 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import ru.practicum.dto.category.CategoryDto;
-import ru.practicum.dto.comment.CommentDto;
 import ru.practicum.dto.user.UserShortDto;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
