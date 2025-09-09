@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.client.StatsClient;
+import ru.practicum.dao.CommentRepository;
 import ru.practicum.dao.EventRepository;
 import ru.practicum.dto.compilation.CompilationDto;
 import ru.practicum.dto.compilation.NewCompilationDto;
@@ -39,6 +40,7 @@ public class CompilationServiceImpl implements CompilationService {
     private final EventRepository eventRepository;
     private final CompilationMapper compilationMapper;
     private final StatsClient statsClient;
+    private final CommentRepository commentRepository;
 
 
     @Transactional
@@ -58,7 +60,7 @@ public class CompilationServiceImpl implements CompilationService {
         compilation = compilationRepository.save(compilation);
         log.debug("Подборка успешно создана");
         CompilationDto result = compilationMapper.toDto(compilation);
-        return addStats(result);
+        return addStatsAndComments(result);
     }
 
     @Transactional
@@ -68,8 +70,8 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation compilation = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Compilation", "Id", compId));
         if (updateComReqDto.getTitle() != null && !updateComReqDto.getTitle().isBlank() &&
-            compilationRepository.existsCompilationByTitle(updateComReqDto.getTitle()) &&
-            !compilation.getTitle().equalsIgnoreCase(updateComReqDto.getTitle())) {
+                compilationRepository.existsCompilationByTitle(updateComReqDto.getTitle()) &&
+                !compilation.getTitle().equalsIgnoreCase(updateComReqDto.getTitle())) {
             throw new AlreadyExistsException("Compilation", "title", updateComReqDto.getTitle());
         }
         if (updateComReqDto.getTitle() != null && !updateComReqDto.getTitle().isBlank()) {
@@ -91,7 +93,7 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation updatedCompilation = compilationRepository.save(compilation);
         CompilationDto result = compilationMapper.toDto(updatedCompilation);
         log.info("Подборка успешно обновлена");
-        return addStats(result);
+        return addStatsAndComments(result);
     }
 
     @Override
@@ -143,7 +145,7 @@ public class CompilationServiceImpl implements CompilationService {
         return result;
     }
 
-    private CompilationDto addStats(CompilationDto compilationDto) {
+    private CompilationDto addStatsAndComments(CompilationDto compilationDto) {
         if (compilationDto.getEvents() != null && !compilationDto.getEvents().isEmpty()) {
             LocalDateTime earliestPublishedDate = compilationDto.getEvents().stream()
                     .map(EventShortDto::getPublishedOn)
@@ -154,6 +156,10 @@ public class CompilationServiceImpl implements CompilationService {
             List<String> uris = compilationDto.getEvents().stream()
                     .map(event -> "/events/" + event.getId())
                     .collect(Collectors.toList());
+            List<Long> eventIds = compilationDto.getEvents().stream()
+                    .map(EventShortDto::getId)
+                    .collect(Collectors.toList());
+            Map<Long, Long> commentsByEventId = getCommentsByEventIds(eventIds);
             Map<String, Long> viewsMap = new HashMap<>();
             if (earliestPublishedDate != null) {
                 viewsMap = getViewsFromStats(uris, earliestPublishedDate);
@@ -161,6 +167,8 @@ public class CompilationServiceImpl implements CompilationService {
             for (EventShortDto eventDto : compilationDto.getEvents()) {
                 String eventUri = "/events/" + eventDto.getId();
                 eventDto.setViews(viewsMap.getOrDefault(eventUri, 0L));
+                eventDto.setComments(commentsByEventId.getOrDefault(eventDto.getId(), 0L));
+
             }
         }
         return compilationDto;
@@ -194,7 +202,7 @@ public class CompilationServiceImpl implements CompilationService {
                 .orElseThrow(() -> new NotFoundException("Compilation", "Id", compId));
         CompilationDto result = compilationMapper.toDto(compilation);
         log.info("Подборка найдена");
-        return addStats(result);
+        return addStatsAndComments(result);
     }
 
     private Set<Event> loadEvents(List<Long> eventIds) {
@@ -226,5 +234,19 @@ public class CompilationServiceImpl implements CompilationService {
             }
         }
         return compilationDto;
+    }
+
+    private Map<Long, Long> getCommentsByEventIds(List<Long> eventIds) {
+        if (eventIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Object[]> results = commentRepository.countCommentsByEventIdIn(eventIds);
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        result -> (Long) result[0],
+                        result -> (Long) result[1]
+                ));
     }
 }
